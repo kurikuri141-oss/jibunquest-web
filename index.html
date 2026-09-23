@@ -700,7 +700,7 @@ function backupJSON(){return JSON.stringify({...S,comm:commDef()})}
 function commDef(){return{on:false,nick:"",av:"a1",cid:"",secret:"",posts:[],rx:{},blocked:[]}}
 function sanitize(o){
   if(!o||typeof o!=="object")return null;
-  const js=(x,n)=>String(x??"").trim().slice(0,n),nid=()=>Math.random().toString(36).slice(2,9);
+  const js=(x,n)=>{const s=String(x??"").trim();if(s.length<=n)return s;const c=s.slice(0,n),i=Math.max(c.lastIndexOf("。"),c.lastIndexOf("、"),c.lastIndexOf(" "));return(i>n*0.5?c.slice(0,i+1):c)+"…"},nid=()=>Math.random().toString(36).slice(2,9);
   const r=fresh("modern",o.aiAuto,o.aiConsent,o.cloudOn);
   r.name=js(o.name,30);r.sample=!!o.sample;r.cleared=!!o.cleared;r.ai=null;
   r.savedAt=Number.isFinite(+o.savedAt)?+o.savedAt:0;
@@ -721,10 +721,10 @@ function sanitize(o){
   r.visit={days:Math.max(0,Math.round(+(o.visit&&o.visit.days))||0),last:/^\d{4}-\d{2}-\d{2}$/.test(String(o.visit&&o.visit.last))?String(o.visit.last):""};
   const bx=o.box;
   if(bx&&typeof bx==="object"&&/^\d{4}-\d{2}-\d{2}$/.test(String(bx.week))&&Array.isArray(bx.quests)){
-    const qs=bx.quests.filter(q=>q&&q.note&&CATS.some(k=>k.id===q.cat)).slice(0,8).map(q=>({...q,id:String(q.id||nid()),note:js(q.note,60),reason:js(q.reason,120),criteria:js(q.criteria,60),
+    const qs=bx.quests.filter(q=>q&&q.note&&CATS.some(k=>k.id===q.cat)).slice(0,8).map(q=>({...q,id:String(q.id||nid()),note:js(q.note,70),reason:js(q.reason,200),criteria:js(q.criteria,100),
       min:Math.max(5,Math.min(90,Math.round(+q.min)||15)),startedAt:Number.isFinite(+q.startedAt)&&q.startedAt?+q.startedAt:null,carried:!!q.carried,
       log:q.log&&typeof q.log==="object"&&q.log.result?{result:String(q.log.result),min:Math.max(0,Math.round(+q.log.min)||0),t:+q.log.t||0}:null}));
-    if(qs.length){r.box={week:bx.week,n:qs.length,src:bx.src==="rule"?"rule":"ai",status:js(bx.status,90),quests:qs,focus:qs.some(q=>q.id===bx.focus)?bx.focus:qs[0].id};r.ai=r.box.quests.find(q=>q.id===r.box.focus)||null}
+    if(qs.length){r.box={week:bx.week,n:qs.length,src:bx.src==="rule"?"rule":"ai",status:js(bx.status,130),quests:qs,focus:qs.some(q=>q.id===bx.focus)?bx.focus:qs[0].id};r.ai=r.box.quests.find(q=>q.id===r.box.focus)||null}
   }
   r.quota=o.quota&&typeof o.quota==="object"?{plan:String(o.quota.plan||"").slice(0,10),remaining:Number.isFinite(+o.quota.remaining)?+o.quota.remaining:null,limit:Number.isFinite(+o.quota.limit)?+o.quota.limit:null,credits:Math.max(0,Math.min(1e6,Math.round(+o.quota.credits)||0))}:null;
   r.logs=(Array.isArray(o.logs)?o.logs:[]).filter(l=>l&&isFinite(l.t)&&CATS.some(k=>k.id===l.cat)&&isFinite(l.min)).map(l=>({...l,id:String(l.id||nid()),min:Math.max(0,Math.min(720,Math.round(l.min)))}));
@@ -1398,7 +1398,7 @@ function countUp(el,to){
   requestAnimationFrame(step);
 }
 const SAFE="- 健康やお金に関わる行動は、一般的で安全な範囲にとどめ、医療・金融などの専門的な助言はしない。体調不良や無理が示唆される場合は、休息を優先する\n- あなたは、ユーザーが決めた方向に進むための伴走者。人生の重大な判断(進学・転職・退職・独立・投資・借入など)を断定せず、選択肢と考える材料を示すにとどめる。ユーザーの能力や適性を断定しない。成功や達成を保証しない";
-const jstr=(x,n)=>String(x??"").trim().slice(0,n);
+const jstr=(x,n)=>{const s=String(x??"").trim();if(s.length<=n)return s;const c=s.slice(0,n),i=Math.max(c.lastIndexOf("。"),c.lastIndexOf("、"),c.lastIndexOf(" "));return(i>n*0.5?c.slice(0,i+1):c)+"…"};
 const okCat=(c,t)=>CATS.some(k=>k.id===c)?c:guessCat(t||"");
 function curChapter(){return (S.ideal.chapters||[]).find(c=>!c.done)||null}
 // その章に、まだ手つかずの中間目標が残っているか(残っているうちは、次の中間目標を追加しない。全部達成して初めて、次が作られる)
@@ -1562,7 +1562,7 @@ function normPlan(o,relax){
   if(chapters.length<2||!items.length)return null;
   const cur=o.current||{};
   const q=o.firstQuest&&typeof o.firstQuest==="object"?o.firstQuest:null;
-  const fq=q&&jstr(q.note,60)?{note:jstr(q.note,60),min:Math.max(5,Math.min(30,Math.round(+q.min)||15)),cat:okCat(q.cat,q.note),ms:Number.isInteger(q.ms)?q.ms:null,reason:jstr(q.reason,120),criteria:jstr(q.criteria,60)}:null;
+  const fq=q&&jstr(q.note,70)?{note:jstr(q.note,70),min:Math.max(5,Math.min(30,Math.round(+q.min)||15)),cat:okCat(q.cat,q.note),ms:Number.isInteger(q.ms)?q.ms:null,reason:jstr(q.reason,200),criteria:jstr(q.criteria,100)}:null;
   const wq=(Array.isArray(o.weekQuests)?o.weekQuests:[]).slice(0,5).map(rawQ).filter(Boolean);
   const bigIdx=Number.isInteger(o.gap&&o.gap.biggest)&&items[o.gap.biggest]?o.gap.biggest:Math.max(0,items.findIndex(g=>g.level==="大"));
   return{current:{summary:jstr(cur.summary,170),unknown:(Array.isArray(cur.unknown)?cur.unknown:[]).map(x=>jstr(x,40)).filter(Boolean).slice(0,5)},
@@ -1629,8 +1629,8 @@ function boxText(){
 function mkQ(o){return{id:uid(),cat:o.cat,min:o.min,note:o.note,reason:o.reason||"",criteria:o.criteria||"",msId:o.msId||null,startedAt:null,log:null,carried:false}}
 function rawQ(x){
   if(!x||typeof x!=="object")return null;
-  const note=jstr(x.note,60);if(!note)return null;
-  return{note,min:Math.max(5,Math.min(90,Math.round(+x.min)||15)),cat:okCat(x.cat,note),ms:Number.isInteger(x.ms)?x.ms:null,reason:jstr(x.reason,120),criteria:jstr(x.criteria,60)};
+  const note=jstr(x.note,70);if(!note)return null;
+  return{note,min:Math.max(5,Math.min(90,Math.round(+x.min)||15)),cat:okCat(x.cat,note),ms:Number.isInteger(x.ms)?x.ms:null,reason:jstr(x.reason,200),criteria:jstr(x.criteria,100)};
 }
 function makeBox(kept,fresh,src,status){
   const qs=[...kept,...fresh],foc=qs.find(q=>qState(q)==="todo")||qs[0];
@@ -1702,7 +1702,7 @@ ${SAFE}
       return mkQ({cat:r.cat,min:r.min,note:r.note,reason:r.reason,criteria:r.criteria,msId:mo?mo.id:null});
     });
     if(extra){S.box.quests.push(...fresh2);setFocus(fresh2[0])}
-    else makeBox(kept,fresh2,"ai",jstr(o.status,90));
+    else makeBox(kept,fresh2,"ai",jstr(o.status,130));
   }catch(e){
     aiFail=wk;
     if(extra){const rqs=ruleBox(extra);S.box.quests.push(...rqs);setFocus(rqs[0])}
